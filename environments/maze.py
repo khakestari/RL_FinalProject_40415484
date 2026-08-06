@@ -1,9 +1,3 @@
-"""
-Maze Environment for RL Final Project
-Implements MDP with stochastic transitions and reward functions
-Student ID: 40415484
-"""
-
 import numpy as np
 from typing import Tuple, Dict, List, Optional
 from enum import IntEnum
@@ -11,7 +5,6 @@ import logging
 
 
 class Action(IntEnum):
-    """Action enumeration."""
     UP = 0
     DOWN = 1
     LEFT = 2
