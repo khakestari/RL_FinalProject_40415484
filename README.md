@@ -69,9 +69,29 @@ pip install -r requirements.txt
 
 ## 💻 نحوه اجرا
 
-### اجرای اصلی پروژه (رابط گرافیکی)
+### اجرای رابط گرافیکی (GUI)
 ```bash
 python main.py
+# یا
+python gui/app.py
+```
+
+**قابلیت‌های GUI:**
+- نمایش بصری هزارتو و عامل
+- انتخاب الگوریتم (VI, Q-Learning, SARSA)
+- بارگذاری مدل‌های آموزش‌دیده
+- کنترل‌های Play/Pause/Reset/Step
+- تنظیم سرعت اجرا
+- نمایش value heatmap و policy arrows
+- آمار لحظه‌ای (reward, steps, success rate)
+
+### اجرای Transfer Learning
+```bash
+# Quick demo
+python transfer/quick_demo_transfer.py
+
+# Full experiment
+python transfer/transfer_learning.py
 ```
 
 ### اجرای آزمایش‌ها
@@ -107,7 +127,20 @@ pytest tests/
 
 ## 📊 نتایج
 
-[نتایج و تحلیل‌ها بعد از تکمیل آزمایش‌ها اضافه خواهند شد]
+### فاز 1-6 تکمیل شد ✅
+- **محیط هزارتو:** 18 تست ✓
+- **Value Iteration:** 12 تست ✓
+- **Q-Learning:** 14 تست ✓
+- **SARSA(λ):** 15 تست ✓
+- **مقایسه الگوریتم‌ها:** 8 تست ✓
+- **Transfer Learning:** 16 تست ✓
+
+**مجموع:** 90 تست پاس شده 🎉
+
+### Transfer Learning
+- **سناریوها:** Scratch, Full Transfer, Scaled Transfer (β=0.25,0.5,0.75), Selective Transfer
+- **هدف‌ها:** Similar Target (15-20% تغییر), Different Target (35%+ تغییر)
+- **معیارها:** Initial performance, Learning speed, Final performance, Negative transfer analysis
 
 ---
 
