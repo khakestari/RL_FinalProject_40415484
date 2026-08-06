@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Results (keep structure but not content)
+results/raw_data/*.csv
+results/raw_data/*.json
+results/models/*.pkl
+results/models/*.npy
+results/figures/*.png
+results/figures/*.jpg
+results/videos/*.mp4
+results/videos/*.avi
+
+# Keep directory structure
+!results/raw_data/.gitkeep
+!results/models/.gitkeep
+!results/figures/.gitkeep
+!results/videos/.gitkeep
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Temporary files
+*.tmp
+*.bak
