@@ -1,3 +1,4 @@
+import math
 import numpy as np
 from collections import deque
 from typing import Tuple, List, Dict, Set
@@ -91,28 +92,20 @@ class MazeGenerator:
         raise RuntimeError(f"Failed to generate valid maze after {max_attempts} attempts")
     
     def _generate_maze_structure(self) -> np.ndarray:
-        """Generate basic maze structure with walls."""
+        """Generate basic maze structure with walls distributed across the full grid."""
         maze = np.zeros((self.size, self.size), dtype=np.int32)
         
-        # Create borders (walls around the maze)
-        maze[0, :] = self.WALL
-        maze[-1, :] = self.WALL
-        maze[:, 0] = self.WALL
-        maze[:, -1] = self.WALL
-        
-        # Calculate required number of walls
+        # Calculate required number of walls across the full grid
         total_cells = self.size * self.size
-        border_walls = 4 * self.size - 4
-        required_total_walls = int(self.min_wall_percentage * total_cells)
-        required_internal_walls = max(0, required_total_walls - border_walls)
+        required_total_walls = math.ceil(self.min_wall_percentage * total_cells)
         
-        # Add internal walls randomly
+        # All cells are available for wall placement
         available_positions = [
-            (i, j) for i in range(1, self.size - 1) 
-            for j in range(1, self.size - 1)
+            (i, j) for i in range(self.size)
+            for j in range(self.size)
         ]
         
-        num_walls_to_place = min(required_internal_walls, len(available_positions))
+        num_walls_to_place = min(required_total_walls, len(available_positions))
         
         if num_walls_to_place > 0:
             wall_positions = self.rng.choice(
@@ -396,17 +389,32 @@ def generate_target_mazes(source_maze: np.ndarray,
     """
     rng = np.random.RandomState(seed + 1000)
     size = source_maze.shape[0]
+    validator = MazeGenerator(size=size)
     
     # Generate similar target maze (15-20% change)
-    similar_maze = source_maze.copy()
-    similar_metadata = source_metadata.copy()
-    _modify_maze(similar_maze, similar_metadata, rng, similar_change_pct, keep_special=True)
+    for _ in range(100):
+        similar_maze = source_maze.copy()
+        similar_metadata = source_metadata.copy()
+        _modify_maze(similar_maze, similar_metadata, rng, similar_change_pct, keep_special=True)
+        if validator._validate_maze(similar_maze, similar_metadata['start'], 
+                                   similar_metadata['key'], similar_metadata['door'], 
+                                   similar_metadata['goal']):
+            break
+    else:
+        raise RuntimeError("Failed to generate valid similar maze")
     
     # Generate different target maze (35%+ change)
     rng_diff = np.random.RandomState(seed + 2000)
-    different_maze = source_maze.copy()
-    different_metadata = source_metadata.copy()
-    _modify_maze(different_maze, different_metadata, rng_diff, different_change_pct, keep_special=False)
+    for _ in range(100):
+        different_maze = source_maze.copy()
+        different_metadata = source_metadata.copy()
+        _modify_maze(different_maze, different_metadata, rng_diff, different_change_pct, keep_special=False)
+        if validator._validate_maze(different_maze, different_metadata['start'], 
+                                   different_metadata['key'], different_metadata['door'], 
+                                   different_metadata['goal']):
+            break
+    else:
+        raise RuntimeError("Failed to generate valid different maze")
     
     return similar_maze, different_maze, similar_metadata, different_metadata
 
@@ -416,10 +424,10 @@ def _modify_maze(maze: np.ndarray, metadata: Dict, rng: np.random.RandomState,
     """Helper function to modify maze for transfer learning."""
     size = maze.shape[0]
     
-    # Get modifiable cells (exclude borders)
+    # Get modifiable cells (all cells in the grid)
     modifiable = []
-    for i in range(1, size - 1):
-        for j in range(1, size - 1):
+    for i in range(size):
+        for j in range(size):
             if keep_special:
                 # Don't modify start, key, door, goal
                 if maze[i, j] not in [MazeGenerator.START, MazeGenerator.KEY, 
@@ -449,7 +457,7 @@ def _modify_maze(maze: np.ndarray, metadata: Dict, rng: np.random.RandomState,
     # If not keeping special cells, relocate key or goal
     if not keep_special:
         # Move key to a new position
-        empty_cells = [(i, j) for i in range(1, size-1) for j in range(1, size-1) 
+        empty_cells = [(i, j) for i in range(size) for j in range(size) 
                       if maze[i, j] == MazeGenerator.EMPTY]
         if empty_cells:
             new_key_pos = empty_cells[rng.choice(len(empty_cells))]

@@ -95,13 +95,36 @@ class MazeGUI:
         canvas_frame = ttk.Frame(left_frame)
         canvas_frame.pack(fill=tk.BOTH, expand=True)
         
-        self.canvas = tk.Canvas(canvas_frame, bg='white', width=600, height=600)
-        self.canvas.pack(fill=tk.BOTH, expand=True)
+        self.canvas = tk.Canvas(canvas_frame, bg='white', width=450, height=450)
+        self.canvas.pack(expand=True)  # Centers it in canvas_frame without stretching
         
         # Right panel: Controls and info (scrollable)
-        right_frame = ttk.Frame(main_frame, width=350)
-        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(10, 0))
-        right_frame.pack_propagate(False)
+        right_container = ttk.Frame(main_frame, width=350)
+        right_container.pack(side=tk.RIGHT, fill=tk.Y, padx=(10, 0))
+        right_container.pack_propagate(False)
+        
+        self.right_canvas = tk.Canvas(right_container, highlightthickness=0)
+        self.right_scrollbar = ttk.Scrollbar(right_container, orient="vertical", command=self.right_canvas.yview)
+        
+        right_frame = ttk.Frame(self.right_canvas)
+        
+        right_frame.bind(
+            "<Configure>",
+            lambda e: self.right_canvas.configure(
+                scrollregion=self.right_canvas.bbox("all")
+            )
+        )
+        
+        self.right_canvas.create_window((0, 0), window=right_frame, anchor="nw", width=330)
+        self.right_canvas.configure(yscrollcommand=self.right_scrollbar.set)
+        
+        self.right_canvas.pack(side="left", fill="both", expand=True)
+        self.right_scrollbar.pack(side="right", fill="y")
+        
+        # Make mousewheel scroll the right canvas
+        def _on_mousewheel(event):
+            self.right_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        self.right_canvas.bind_all("<MouseWheel>", _on_mousewheel)
         
         # --- Algorithm selection ---
         algo_frame = ttk.LabelFrame(right_frame, text="Algorithm", padding=8)
@@ -536,6 +559,10 @@ class MazeGUI:
             self.episode_steps = 0
             if self.renderer:
                 self.renderer.reset_visited()
+                self.renderer.set_key_collected(False)
+                self.renderer.update_agent(self.canvas, self.current_state[0], self.current_state[1], 
+                                         self.current_state[3] if len(self.current_state) > 3 else None)
+                self._redraw()
         
         # Get action from agent
         is_greedy = (self.mode_var.get() == "evaluate")
@@ -552,6 +579,9 @@ class MazeGUI:
         
         self.episode_reward += reward
         self.episode_steps += 1
+        
+        # Update state before drawing
+        self.current_state = next_state
         
         # Update visualization
         x, y = next_state[0], next_state[1]
@@ -575,7 +605,6 @@ class MazeGUI:
         if done:
             # Episode finished
             self.total_episodes += 1
-            # Fix: check 'event' not 'success'
             if info.get('event') == 'goal_reached':
                 self.successful_episodes += 1
                 self.status_label.config(text="Status: ✅ SUCCESS!")
@@ -589,7 +618,6 @@ class MazeGUI:
             self._update_stats()
             self.current_state = None
         else:
-            self.current_state = next_state
             self.status_label.config(text=f"Status: Running... (action: {['↑','↓','←','→'][action]})")
     
     def _run_episode(self):

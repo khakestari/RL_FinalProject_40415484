@@ -19,21 +19,25 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 
-def load_or_generate_maze():
+def load_or_generate_maze(force_new=False):
     """Load saved maze or generate a new one."""
     from environments.generator import MazeGenerator
     
     maze_path = project_root / "environments" / "maps" / "maze_seed8_size15.npz"
     
-    try:
-        maze, metadata = MazeGenerator.load_maze(str(maze_path))
-        print("✓ Loaded saved maze")
-    except Exception:
-        print("Generating new maze...")
-        generator = MazeGenerator(size=15, seed=8)
-        maze, metadata = generator.generate()
-        generator.save_maze(maze, metadata)
-        print("✓ Maze generated and saved")
+    if not force_new:
+        try:
+            maze, metadata = MazeGenerator.load_maze(str(maze_path))
+            print("✓ Loaded saved maze")
+            return maze, metadata
+        except Exception:
+            pass
+            
+    print("Generating new maze...")
+    generator = MazeGenerator(size=15, seed=8)
+    maze, metadata = generator.generate()
+    generator.save_maze(maze, metadata)
+    print("✓ Maze generated and saved")
     
     return maze, metadata
 
@@ -45,7 +49,7 @@ def train_agent(args):
     from agents.q_learning import QLearning
     from agents.sarsa_lambda import SarsaLambda
     
-    maze, metadata = load_or_generate_maze()
+    maze, metadata = load_or_generate_maze(getattr(args, 'new_maze', False))
     
     env = MazeEnvironment(maze, metadata, reward_type='sparse', seed=42)
     
@@ -115,7 +119,7 @@ def evaluate_agent(args):
     from agents.q_learning import QLearning
     from agents.sarsa_lambda import SarsaLambda
     
-    maze, metadata = load_or_generate_maze()
+    maze, metadata = load_or_generate_maze(getattr(args, 'new_maze', False))
     env = MazeEnvironment(maze, metadata, reward_type='sparse', seed=42)
     
     models_dir = project_root / "results" / "models"
@@ -202,6 +206,12 @@ def main():
         type=int,
         default=8,
         help='Random seed (default: 8 based on student ID)'
+    )
+    
+    parser.add_argument(
+        '--new-maze',
+        action='store_true',
+        help='Force generating a new maze instead of loading the saved one'
     )
     
     args = parser.parse_args()
