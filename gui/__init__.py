@@ -1,8 +1,8 @@
 """
-GUI module for visualization
+GUI Module
+Graphical User Interface for RL Maze Environment
 """
 
-from .app import MazeGUI
 from .renderer import MazeRenderer
 
-__all__ = ['MazeGUI', 'MazeRenderer']
+__all__ = ['MazeRenderer']
