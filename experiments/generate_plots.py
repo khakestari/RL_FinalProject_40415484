@@ -66,18 +66,28 @@ def extract_value_map(agent, state_keys: list = ['x', 'y']) -> dict:
     value_map = {}
     
     try:
-        if hasattr(agent, 'V'):
-            # Value Iteration
-            for state, value in agent.V.items():
-                if len(state) >= 2:
-                    value_map[(state[0], state[1])] = value
-        
-        elif hasattr(agent, 'Q'):
-            # Q-Learning or SARSA
-            for state in agent.Q.keys():
-                if len(state) >= 2:
-                    q_values = agent.Q[state]
-                    value_map[(state[0], state[1])] = max(q_values)
+        if isinstance(agent, dict):
+            if 'V' in agent:
+                for state, value in agent['V'].items():
+                    if len(state) >= 2:
+                        value_map[(state[0], state[1])] = value
+            elif 'Q' in agent:
+                for state, q_values in agent['Q'].items():
+                    if len(state) >= 2:
+                        value_map[(state[0], state[1])] = max(q_values)
+        else:
+            if hasattr(agent, 'V'):
+                # Value Iteration
+                for state, value in agent.V.items():
+                    if len(state) >= 2:
+                        value_map[(state[0], state[1])] = value
+            
+            elif hasattr(agent, 'Q'):
+                # Q-Learning or SARSA
+                for state in agent.Q.keys():
+                    if len(state) >= 2:
+                        q_values = agent.Q[state]
+                        value_map[(state[0], state[1])] = max(q_values)
     
     except Exception as e:
         print(f"Warning: Could not extract value map: {e}")
@@ -90,22 +100,33 @@ def extract_policy_map(agent) -> dict:
     policy_map = {}
     
     try:
-        if hasattr(agent, 'get_action'):
-            # Try to extract policy
-            if hasattr(agent, 'V'):
-                # Value Iteration - has explicit policy
-                for state in agent.V.keys():
+        if isinstance(agent, dict):
+            if 'policy' in agent:
+                for state, action in agent['policy'].items():
                     if len(state) >= 2:
-                        action = agent.get_action(state)
                         policy_map[(state[0], state[1])] = action
-            
-            elif hasattr(agent, 'Q'):
-                # Q-Learning or SARSA
-                for state in agent.Q.keys():
+            elif 'Q' in agent:
+                for state, q_values in agent['Q'].items():
                     if len(state) >= 2:
-                        q_values = agent.Q[state]
                         action = int(np.argmax(q_values))
                         policy_map[(state[0], state[1])] = action
+        else:
+            if hasattr(agent, 'get_action'):
+                # Try to extract policy
+                if hasattr(agent, 'V'):
+                    # Value Iteration - has explicit policy
+                    for state in agent.V.keys():
+                        if len(state) >= 2:
+                            action = agent.get_action(state)
+                            policy_map[(state[0], state[1])] = action
+                
+                elif hasattr(agent, 'Q'):
+                    # Q-Learning or SARSA
+                    for state in agent.Q.keys():
+                        if len(state) >= 2:
+                            q_values = agent.Q[state]
+                            action = int(np.argmax(q_values))
+                            policy_map[(state[0], state[1])] = action
     
     except Exception as e:
         print(f"Warning: Could not extract policy: {e}")
@@ -166,9 +187,9 @@ def main():
     try:
         if maze is not None:
             model_files = {
-                'Value Iteration': 'results/models/value_iteration.pkl',
-                'Q-Learning': 'results/models/q_learning.pkl',
-                'SARSA(λ)': 'results/models/sarsa_lambda.pkl',
+                'Value Iteration': 'results/models/value_iteration_gamma099.pkl',
+                'Q-Learning': 'results/models/q_learning_source.pkl',
+                'SARSA(λ)': 'results/models/sarsa_lambda_07.pkl',
             }
             
             for agent_name, filepath in model_files.items():
